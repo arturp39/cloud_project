@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  ACR_NAME: foodregistryartur
+  ACR_NAME: foodregistryartur.azurecr.io
   ORDER_APP: order-service
   DELIVERY_APP: delivery-service
   RESTAURANT_APP: restaurant-service
