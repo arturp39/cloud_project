@@ -1,0 +1,65 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  ACR_NAME: myregistry.azurecr.io
+  ORDER_APP: order-service
+  DELIVERY_APP: delivery-service
+  RESTAURANT_APP: restaurant-service
+
+jobs:
+  build-test-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Azure Container Registry Login
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_NAME }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push order-service
+        run: |
+          docker build -t $ACR_NAME/$ORDER_APP ./order-service
+          docker push $ACR_NAME/$ORDER_APP
+
+      - name: Build and push delivery-service
+        run: |
+          docker build -t $ACR_NAME/$DELIVERY_APP ./delivery-service
+          docker push $ACR_NAME/$DELIVERY_APP
+
+      - name: Build and push restaurant-service
+        run: |
+          docker build -t $ACR_NAME/$RESTAURANT_APP ./restaurant-service
+          docker push $ACR_NAME/$RESTAURANT_APP
+
+      - name: Deploy order-service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: order-service-app
+          images: ${{ env.ACR_NAME }}/${{ env.ORDER_APP }}
+
+      - name: Deploy delivery-service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: delivery-service-app
+          images: ${{ env.ACR_NAME }}/${{ env.DELIVERY_APP }}
+
+      - name: Deploy restaurant-service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: restaurant-service-app
+          images: ${{ env.ACR_NAME }}/${{ env.RESTAURANT_APP }}

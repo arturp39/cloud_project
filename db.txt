@@ -1,0 +1,13 @@
+{
+  "connectionString": "postgresql://foodadmin:StrongP@ssword123!@fooddb-artur123.postgres.database.azure.com/postgres?sslmode=require",
+  "databaseName": "postgres",
+  "firewallName": "AllowAll_2025-5-27_22-6-24",
+  "host": "fooddb-artur123.postgres.database.azure.com",
+  "id": "/subscriptions/56e2a55b-c9cf-4086-86e5-586f759e68b9/resourceGroups/food-delivery-rg/providers/Microsoft.DBforPostgreSQL/flexibleServers/fooddb-artur123",
+  "location": "Poland Central",
+  "password": "StrongP@ssword123!",
+  "resourceGroup": "food-delivery-rg",
+  "skuname": "Standard_B1ms",
+  "username": "foodadmin",
+  "version": "13"
+}
