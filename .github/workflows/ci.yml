@@ -63,3 +63,5 @@ jobs:
         with:
           app-name: restaurant-service-app
           images: ${{ env.ACR_NAME }}/${{ env.RESTAURANT_APP }}
+
+          
