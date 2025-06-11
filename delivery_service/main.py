@@ -26,24 +26,18 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from pathlib import Path
 
-# Add the root directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
 
-# Local imports
 from models import Base, Delivery, DeliveryStatus
 from database import engine, get_db
 from schemas import DeliveryCreate, DeliveryResponse
 from log_to_queue import ServiceBusLogHandler, setup_logging
 
-# Environment variables
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 fernet = Fernet(ENCRYPTION_KEY.encode())
-
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+REDIS_URL = os.getenv("REDIS_URL")
 SERVICE_BUS_CONNECTION_STR = os.getenv("SERVICE_BUS")
 SERVICE_BUS_QUEUE_NAME = os.getenv("SERVICE_BUS_QUEUE_NAME")
-
-# Database configuration
 POSTGRES_DB = os.getenv("POSTGRES_DB")
 POSTGRES_USER = os.getenv("POSTGRES_USER")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
@@ -59,7 +53,6 @@ def get_pg_connection():
         port=POSTGRES_PORT
     )
 
-# Thread pool for database operations
 executor = ThreadPoolExecutor(max_workers=5)
 
 def encrypt_data(data: str) -> str:
@@ -68,21 +61,17 @@ def encrypt_data(data: str) -> str:
 def decrypt_data(data: str) -> str:
     return fernet.decrypt(base64.b64decode(data.encode())).decode()
 
-# Configure logging
 setup_logging()
 logger = logging.getLogger(__name__)
 
-# Create tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Delivery Service")
 
-# Pydantic models
 class DeliveryAssignment(BaseModel):
     order_id: int
     courier_name: str
 
-# GraphQL types
 @strawberry.type
 class DeliveryType:
     id: int
@@ -157,7 +146,6 @@ async def startup_event():
     logging.info("startup: starting background consumer")
     app.state.task = asyncio.create_task(consume_from_queue(app))
     
-    # Initialize Redis cache
     redis = aioredis.from_url(REDIS_URL, encoding="utf8", decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
@@ -170,7 +158,6 @@ async def shutdown_event():
     except asyncio.CancelledError:
         logging.info("background task cancelled")
     
-    # Close all logging handlers
     for handler in logging.getLogger().handlers:
         if isinstance(handler, ServiceBusLogHandler):
             await handler.close()
@@ -202,7 +189,7 @@ async def get_delivery(delivery_id: int, db: Session = Depends(get_db)):
             raise HTTPException(status_code=404, detail="Delivery not found")
         return delivery
     except Exception as e:
-        logger.error(f"💥 Error fetching delivery: {e}")
+        logger.error(f"Error fetching delivery: {e}")
         raise
 
 

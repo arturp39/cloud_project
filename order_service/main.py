@@ -26,13 +26,11 @@ import backoff
 import sys
 from pathlib import Path
 
-# Add the root directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from log_to_queue import ServiceBusLogHandler, setup_logging
 from fastapi.middleware.cors import CORSMiddleware
 import redis
-import uuid
 
 start_time = time.time()
 
@@ -43,19 +41,13 @@ POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT")
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")
 cipher = Fernet(ENCRYPTION_KEY.encode())
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+REDIS_URL = os.getenv("REDIS_URL")
 SERVICE_BUS_CONNECTION_STRING = os.getenv("SERVICE_BUS")
-SERVICE_BUS_QUEUE_NAME = os.getenv("SERVICE_BUS_QUEUE_NAME")  # For business messages
-LOG_QUEUE_NAME = os.getenv("LOG_QUEUE_NAME")  # For logs
-
-# Configure logging
+SERVICE_BUS_QUEUE_NAME = os.getenv("SERVICE_BUS_QUEUE_NAME") 
+LOG_QUEUE_NAME = os.getenv("LOG_QUEUE_NAME")
 setup_logging()
 logger = logging.getLogger(__name__)
-
-# Initialize Redis client
 redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
-
-# Initialize Service Bus client
 service_bus_client = None
 service_bus_sender = None
 
@@ -80,8 +72,8 @@ def get_pg_connection():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize Redis cache with retry
     try:
+        # Initialize Redis
         redis_client = await aioredis.from_url(
             REDIS_URL,
             encoding="utf8",
@@ -92,16 +84,39 @@ async def lifespan(app: FastAPI):
         await redis_client.ping()
         FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
         logger.info("Successfully connected to Redis")
-    except Exception as e:
-        logger.error(f"Failed to connect to Redis: {e}")
-        raise
-    yield
-    await redis_client.close()
 
-# Initialize FastAPI app with lifespan
+        # Initialize Service Bus
+        global service_bus_client, service_bus_sender
+        logger.info("Initializing Service Bus connection...")
+        if SERVICE_BUS_CONNECTION_STRING:
+            service_bus_client = ServiceBusClient.from_connection_string(
+                conn_str=SERVICE_BUS_CONNECTION_STRING,
+                logging_enable=True
+            )
+            service_bus_sender = service_bus_client.get_queue_sender(queue_name=SERVICE_BUS_QUEUE_NAME)
+            logger.info("Service Bus connection initialized successfully")
+        else:
+            logger.warning("Service Bus connection string not set")
+
+    except Exception as e:
+        logger.error(f"Initialization error: {e}")
+        raise
+
+    yield
+
+    # Shutdown logic
+    try:
+        if service_bus_sender:
+            await service_bus_sender.close()
+        if service_bus_client:
+            await service_bus_client.close()
+        await redis_client.close()
+        logger.info("Resources closed successfully")
+    except Exception as e:
+        logger.error(f"Shutdown error: {e}")
+
 app = FastAPI(title="Order Service", lifespan=lifespan)
 
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -174,7 +189,6 @@ async def create_order(order: OrderCreate):
 
 @app.get("/health")
 async def health():
-    # Check Redis connection
     try:
         redis_client = await aioredis.from_url(REDIS_URL, encoding="utf8", decode_responses=True)
         await redis_client.ping()
@@ -184,7 +198,6 @@ async def health():
         redis_status = "error"
         logging.error(f"Redis health check failed: {e}")
 
-    # Check DB connection
     try:
         with get_pg_connection() as conn:
             with conn.cursor() as cur:
@@ -203,7 +216,7 @@ async def health():
     }
 
 @app.get("/metrics")
-@cache(expire=30)  # Cache metrics for 30 seconds
+@cache(expire=30)
 async def metrics():
     def fetch_order_count():
         with get_pg_connection() as conn:
@@ -215,7 +228,6 @@ async def metrics():
     order_count = await loop.run_in_executor(executor, fetch_order_count)
     uptime = time.time() - start_time
 
-    # Check Redis connection
     try:
         redis_client = await aioredis.from_url(REDIS_URL, encoding="utf8", decode_responses=True)
         await redis_client.ping()
@@ -264,7 +276,6 @@ class Query:
                     """)
                     rows = cur.fetchall()
                     
-                    # Group items by order
                     orders = {}
                     for row in rows:
                         order_id = row[0]
@@ -327,61 +338,3 @@ schema = Schema(query=Query)
 graphql_app = GraphQLRouter(schema)
 
 app.include_router(graphql_app, prefix="/graphql")
-
-# Initialize Service Bus connection
-async def init_service_bus():
-    global service_bus_client, service_bus_sender
-    try:
-        logger.info("Initializing Service Bus connection...")
-        if not SERVICE_BUS_CONNECTION_STRING:
-            logger.warning("Service Bus connection string not set")
-            return
-
-        service_bus_client = ServiceBusClient.from_connection_string(
-            conn_str=SERVICE_BUS_CONNECTION_STRING,
-            logging_enable=True
-        )
-        service_bus_sender = service_bus_client.get_queue_sender(queue_name=SERVICE_BUS_QUEUE_NAME)
-        logger.info("Service Bus connection initialized successfully")
-    except Exception as e:
-        logger.error(f"Service Bus initialization error: {str(e)}")
-        raise
-
-# Initialize Redis connection
-def init_redis():
-    try:
-        logger.info("Testing Redis connection...")
-        redis_client.ping()
-        logger.info("Redis connection successful")
-    except Exception as e:
-        logger.error(f"Redis connection error: {str(e)}")
-        raise
-
-# Startup event
-@app.on_event("startup")
-async def startup_event():
-    try:
-        logger.info("Starting up Order Service...")
-        # Initialize database
-        init_db()
-        # Initialize Service Bus
-        await init_service_bus()
-        # Initialize Redis
-        init_redis()
-        logger.info("Order Service startup completed successfully")
-    except Exception as e:
-        logger.error(f"Startup error: {str(e)}")
-        raise
-
-# Shutdown event
-@app.on_event("shutdown")
-async def shutdown_event():
-    try:
-        logger.info("Shutting down Order Service...")
-        if service_bus_sender:
-            await service_bus_sender.close()
-        if service_bus_client:
-            await service_bus_client.close()
-        logger.info("Order Service shutdown completed")
-    except Exception as e:
-        logger.error(f"Shutdown error: {str(e)}")

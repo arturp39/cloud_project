@@ -5,7 +5,7 @@ import os
 from urllib.parse import quote_plus
 
 POSTGRES_USER = os.getenv("POSTGRES_USER")
-POSTGRES_PASSWORD = quote_plus(os.getenv("POSTGRES_PASSWORD", ""))  # URL encode the password
+POSTGRES_PASSWORD = quote_plus(os.getenv("POSTGRES_PASSWORD")) 
 POSTGRES_DB = os.getenv("POSTGRES_DB")
 POSTGRES_HOST = os.getenv("POSTGRES_HOST")
 POSTGRES_PORT = os.getenv("POSTGRES_PORT")

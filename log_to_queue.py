@@ -56,9 +56,9 @@ class ServiceBusLogHandler(logging.Handler):
                         )
                         self._sender = self._client.get_queue_sender(queue_name=queue_name)
                         self._initialized = True
-                        print("✅ Service Bus client initialized")
+                        print("Service Bus client initialized")
                     except Exception as e:
-                        print(f"❌ Failed to initialize Service Bus client: {str(e)}")
+                        print(f"Failed to initialize Service Bus client: {str(e)}")
                         self._client = None
                         self._sender = None
                         raise
@@ -68,7 +68,7 @@ class ServiceBusLogHandler(logging.Handler):
             await self._ensure_initialized()
 
             if not self._sender:
-                print("❌ Service Bus sender is not available")
+                print("Service Bus sender is not available")
                 return
 
             async with self._connection_lock:
@@ -87,9 +87,9 @@ class ServiceBusLogHandler(logging.Handler):
                 )
 
                 await self._sender.send_messages(message)
-                print(f"📤 Log message sent to Service Bus: {log_entry['message']}")
+                print(f"Log message sent to Service Bus: {log_entry['message']}")
         except Exception as e:
-            print(f"❗ Error sending log to Service Bus: {str(e)}")
+            print(f"Error sending log to Service Bus: {str(e)}")
             self._initialized = False
             self._client = None
             self._sender = None

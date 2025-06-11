@@ -20,7 +20,6 @@ from typing import List, Optional
 import sys
 from pathlib import Path
 
-# Add the root directory to Python path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from log_to_queue import ServiceBusLogHandler, setup_logging
@@ -91,7 +90,7 @@ schema = Schema(query=Query)
 graphql_app = GraphQLRouter(schema)
 
 @app.get("/menu")
-@cache(expire=300)  # Cache menu for 5 minutes
+@cache(expire=300)
 async def get_menu():
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(executor, fetch_menu)
@@ -99,7 +98,6 @@ async def get_menu():
 
 @app.get("/health")
 async def health():
-    # Check Redis connection
     try:
         pong = await app.state.redis.ping()
         redis_status = "ok" if pong else "error"
@@ -107,7 +105,6 @@ async def health():
         redis_status = "error"
         logging.error(f"Redis health check failed: {e}")
 
-    # Check DB connection
     try:
         with get_pg_connection() as conn:
             with conn.cursor() as cur:
