@@ -1,8 +1,0 @@
-fastapi
-uvicorn
-asyncpg
-redis
-azure-servicebus
-cryptography
-python-dotenv
-psycopg2-binary

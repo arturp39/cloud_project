@@ -1,48 +1,70 @@
-version: "3.9"
-
 services:
-  postgres:
-    image: postgres:14
-    container_name: postgres
-    environment:
-      POSTGRES_USER: foodadmin
-      POSTGRES_PASSWORD: StrongP@ssword123!
-      POSTGRES_DB: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:alpine
-    container_name: redis
-    ports:
-      - "6379:6379"
-
-  restaurant-service:
-    build: ./restaurant-service
+  order-service:
+    build:
+      context: .
+      dockerfile: order_service/Dockerfile
     ports:
       - "8000:8000"
-    env_file: .env
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - SERVICE_BUS=${SERVICE_BUS}
+      - SERVICE_BUS_QUEUE_NAME=${SERVICE_BUS_QUEUE_NAME}
+      - REDIS_URL=${REDIS_URL}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     depends_on:
-      - postgres
       - redis
 
-  order-service:
-    build: ./order-service
+  delivery-service:
+    build:
+      context: .
+      dockerfile: delivery_service/Dockerfile
     ports:
       - "8001:8000"
-    env_file: .env
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - SERVICE_BUS=${SERVICE_BUS}
+      - SERVICE_BUS_QUEUE_NAME=${SERVICE_BUS_QUEUE_NAME}
+      - REDIS_URL=${REDIS_URL}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
     depends_on:
-      - postgres
+      - redis
 
-  delivery-service:
-    build: ./delivery-service
+  restaurant-service:
+    build:
+      context: .
+      dockerfile: restaurant_service/Dockerfile
     ports:
       - "8002:8000"
-    env_file: .env
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - REDIS_URL=${REDIS_URL}
     depends_on:
-      - postgres
+      - redis
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
 
 volumes:
-  pg_data:
+  redis_data:
