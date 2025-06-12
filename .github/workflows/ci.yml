@@ -7,9 +7,9 @@ on:
 
 env:
   ACR_NAME: foodregistryartur.azurecr.io
-  ORDER_APP: order-service
-  DELIVERY_APP: delivery-service
-  RESTAURANT_APP: restaurant-service
+  ORDER_APP: order_service
+  DELIVERY_APP: delivery_service
+  RESTAURANT_APP: restaurant_service
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
@@ -36,28 +36,28 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Build and push order-service
+      - name: Build and push order_service
         run: |
-          docker build -t $ACR_NAME/$ORDER_APP:$IMAGE_TAG -t $ACR_NAME/$ORDER_APP:latest ./order-service
+          docker build -t $ACR_NAME/$ORDER_APP:$IMAGE_TAG -t $ACR_NAME/$ORDER_APP:latest ./order_service
           docker push $ACR_NAME/$ORDER_APP:$IMAGE_TAG
           docker push $ACR_NAME/$ORDER_APP:latest
 
-      - name: Build and push delivery-service
+      - name: Build and push delivery_service
         run: |
-          docker build -t $ACR_NAME/$DELIVERY_APP:$IMAGE_TAG -t $ACR_NAME/$DELIVERY_APP:latest ./delivery-service
+          docker build -t $ACR_NAME/$DELIVERY_APP:$IMAGE_TAG -t $ACR_NAME/$DELIVERY_APP:latest ./delivery_service
           docker push $ACR_NAME/$DELIVERY_APP:$IMAGE_TAG
           docker push $ACR_NAME/$DELIVERY_APP:latest
 
-      - name: Build and push restaurant-service
+      - name: Build and push restaurant_service
         run: |
-          docker build -t $ACR_NAME/$RESTAURANT_APP:$IMAGE_TAG -t $ACR_NAME/$RESTAURANT_APP:latest ./restaurant-service
+          docker build -t $ACR_NAME/$RESTAURANT_APP:$IMAGE_TAG -t $ACR_NAME/$RESTAURANT_APP:latest ./restaurant_service
           docker push $ACR_NAME/$RESTAURANT_APP:$IMAGE_TAG
           docker push $ACR_NAME/$RESTAURANT_APP:latest
 
-      - name: Deploy order-service
+      - name: Deploy order_service
         uses: azure/webapps-deploy@v2
         with:
-          app-name: order-service-app
+          app-name: order_service-app
           images: ${{ env.ACR_NAME }}/${{ env.ORDER_APP }}:${{ env.IMAGE_TAG }}
         env:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
@@ -70,10 +70,10 @@ jobs:
           REDIS_URL: ${{ secrets.REDIS_URL }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
 
-      - name: Deploy delivery-service
+      - name: Deploy delivery_service
         uses: azure/webapps-deploy@v2
         with:
-          app-name: delivery-service-app
+          app-name: delivery_service-app
           images: ${{ env.ACR_NAME }}/${{ env.DELIVERY_APP }}:${{ env.IMAGE_TAG }}
         env:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
@@ -86,10 +86,10 @@ jobs:
           REDIS_URL: ${{ secrets.REDIS_URL }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
 
-      - name: Deploy restaurant-service
+      - name: Deploy restaurant_service
         uses: azure/webapps-deploy@v2
         with:
-          app-name: restaurant-service-app
+          app-name: restaurant_service-app
           images: ${{ env.ACR_NAME }}/${{ env.RESTAURANT_APP }}:${{ env.IMAGE_TAG }}
         env:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}

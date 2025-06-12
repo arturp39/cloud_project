@@ -1,5 +1,5 @@
 services:
-  order-service:
+  order_service:
     build:
       context: .
       dockerfile: order_service/Dockerfile
@@ -20,7 +20,7 @@ services:
     depends_on:
       - redis
 
-  delivery-service:
+  delivery_service:
     build:
       context: .
       dockerfile: delivery_service/Dockerfile
@@ -41,7 +41,7 @@ services:
     depends_on:
       - redis
 
-  restaurant-service:
+  restaurant_service:
     build:
       context: .
       dockerfile: restaurant_service/Dockerfile
