@@ -73,7 +73,6 @@ def get_pg_connection():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        # Initialize Redis
         redis_client = await aioredis.from_url(
             REDIS_URL,
             encoding="utf8",
@@ -85,7 +84,6 @@ async def lifespan(app: FastAPI):
         FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
         logger.info("Successfully connected to Redis")
 
-        # Initialize Service Bus
         global service_bus_client, service_bus_sender
         logger.info("Initializing Service Bus connection...")
         if SERVICE_BUS_CONNECTION_STRING:
@@ -104,7 +102,6 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown logic
     try:
         if service_bus_sender:
             await service_bus_sender.close()

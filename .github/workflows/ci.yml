@@ -24,6 +24,7 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
+
       - name: Log in to Azure
         uses: azure/login@v1
         with:
@@ -38,19 +39,19 @@ jobs:
 
       - name: Build and push order_service
         run: |
-          docker build -t $ACR_NAME/$ORDER_APP:$IMAGE_TAG -t $ACR_NAME/$ORDER_APP:latest ./order_service
+          docker build -f order_service/Dockerfile -t $ACR_NAME/$ORDER_APP:$IMAGE_TAG -t $ACR_NAME/$ORDER_APP:latest .
           docker push $ACR_NAME/$ORDER_APP:$IMAGE_TAG
           docker push $ACR_NAME/$ORDER_APP:latest
 
       - name: Build and push delivery_service
         run: |
-          docker build -t $ACR_NAME/$DELIVERY_APP:$IMAGE_TAG -t $ACR_NAME/$DELIVERY_APP:latest ./delivery_service
+          docker build -f delivery_service/Dockerfile -t $ACR_NAME/$DELIVERY_APP:$IMAGE_TAG -t $ACR_NAME/$DELIVERY_APP:latest .
           docker push $ACR_NAME/$DELIVERY_APP:$IMAGE_TAG
           docker push $ACR_NAME/$DELIVERY_APP:latest
 
       - name: Build and push restaurant_service
         run: |
-          docker build -t $ACR_NAME/$RESTAURANT_APP:$IMAGE_TAG -t $ACR_NAME/$RESTAURANT_APP:latest ./restaurant_service
+          docker build -f restaurant_service/Dockerfile -t $ACR_NAME/$RESTAURANT_APP:$IMAGE_TAG -t $ACR_NAME/$RESTAURANT_APP:latest .
           docker push $ACR_NAME/$RESTAURANT_APP:$IMAGE_TAG
           docker push $ACR_NAME/$RESTAURANT_APP:latest
 
