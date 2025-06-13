@@ -127,7 +127,7 @@ async def consume_from_queue(app: FastAPI):
                             with get_pg_connection() as conn:
                                 with conn.cursor() as cur:
                                     logger.info(f"Inserting delivery into DB for order_id {data['order_id']}")
-                                    encrypted_name = encrypt_data("auto-assigned")
+                                    encrypted_name = encrypt_data("courier_name")
                                     cur.execute(
                                         "INSERT INTO deliveries (order_id, courier_name, status) VALUES (%s, %s, %s)",
                                         (data["order_id"], encrypted_name, "PENDING")
@@ -152,7 +152,7 @@ async def startup_event():
         REDIS_URL,
         encoding="utf8",
         decode_responses=True,
-        ssl=True,  # <--- required for rediss
+        ssl=True,
         socket_timeout=5,
         socket_connect_timeout=5
     )
