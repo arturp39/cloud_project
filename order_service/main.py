@@ -292,7 +292,17 @@ class Query:
 
         loop = asyncio.get_running_loop()
         orders = await loop.run_in_executor(executor, fetch_orders)
-        return [Order(**order) for order in orders]
+        return [
+        Order(
+            id=order['id'],
+            customer_name=order['customer_name'],
+            customer_address=order['customer_address'],
+            created_at=order['created_at'],
+            items=[OrderItem(**item) for item in order['items']]
+        )
+        for order in orders
+        ]
+
     
     @strawberry.field
     async def order(self, id: int) -> Optional[Order]:
@@ -328,7 +338,13 @@ class Query:
 
         loop = asyncio.get_running_loop()
         order = await loop.run_in_executor(executor, fetch_order)
-        return Order(**order) if order else None
+        return Order(
+            id=order['id'],
+            customer_name=order['customer_name'],
+            customer_address=order['customer_address'],
+            created_at=order['created_at'],
+            items=[OrderItem(**item) for item in order['items']]
+        ) if order else None
 
 schema = Schema(query=Query)
 graphql_app = GraphQLRouter(schema)

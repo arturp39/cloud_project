@@ -78,8 +78,8 @@ class DeliveryType:
     order_id: int
     courier_name: str
     status: str
-    created_at: str
-    updated_at: str
+    created_at: Optional[str]
+    updated_at: Optional[str]
 
 @strawberry.type
 class Query:
@@ -93,11 +93,12 @@ class Query:
                 order_id=d.order_id,
                 courier_name=d.courier_name,
                 status=d.status.value,
-                created_at=d.created_at.isoformat(),
-                updated_at=d.updated_at.isoformat()
+                created_at=d.created_at.isoformat() if d.created_at else None,
+                updated_at=d.updated_at.isoformat() if d.updated_at else None
             )
             for d in deliveries
         ]
+
 
 schema = strawberry.Schema(query=Query)
 graphql_app = GraphQLRouter(schema)
