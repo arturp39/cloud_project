@@ -28,9 +28,9 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from models import Base, Delivery, DeliveryStatus
-from database import engine, get_db
-from schemas import DeliveryCreate, DeliveryResponse
+from delivery_service.models import Base, Delivery, DeliveryStatus
+from delivery_service.database import engine, get_db
+from delivery_service.schemas import DeliveryCreate, DeliveryResponse
 from log_to_queue import ServiceBusLogHandler, setup_logging
 
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")

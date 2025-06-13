@@ -47,7 +47,6 @@ SERVICE_BUS_QUEUE_NAME = os.getenv("SERVICE_BUS_QUEUE_NAME")
 LOG_QUEUE_NAME = os.getenv("LOG_QUEUE_NAME")
 setup_logging()
 logger = logging.getLogger(__name__)
-redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 service_bus_client = None
 service_bus_sender = None
 

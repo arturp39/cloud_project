@@ -45,6 +45,7 @@ start_time = time.time()
 app = FastAPI(lifespan=lifespan)
 setup_logging()
 logger = logging.getLogger(__name__)
+logger.addHandler(ServiceBusLogHandler())
 
 executor = ThreadPoolExecutor(max_workers=5)
 
