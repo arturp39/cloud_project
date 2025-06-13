@@ -77,7 +77,7 @@ async def lifespan(app: FastAPI):
             encoding="utf8",
             decode_responses=True,
             socket_timeout=5,
-            socket_connect_timeout=5
+            socket_connect_timeout=5,
         )
         await redis_client.ping()
         FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")

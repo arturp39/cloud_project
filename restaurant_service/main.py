@@ -35,7 +35,12 @@ sslmode = os.getenv("POSTGRES_SSLMODE", "disable")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    redis_client = await redis.from_url(REDIS_URL)
+    redis_client = await redis.from_url(
+        REDIS_URL,
+        encoding="utf8",
+        decode_responses=True,
+        ssl=True
+    )
     FastAPICache.init(RedisBackend(redis_client), prefix="fastapi-cache")
     app.state.redis = redis_client
     yield

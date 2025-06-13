@@ -127,9 +127,10 @@ async def consume_from_queue(app: FastAPI):
                             with get_pg_connection() as conn:
                                 with conn.cursor() as cur:
                                     logger.info(f"Inserting delivery into DB for order_id {data['order_id']}")
+                                    encrypted_name = encrypt_data("auto-assigned")
                                     cur.execute(
                                         "INSERT INTO deliveries (order_id, courier_name, status) VALUES (%s, %s, %s)",
-                                        (data["order_id"], "auto-assigned", "PENDING")
+                                        (data["order_id"], encrypted_name, "PENDING")
                                     )
                                     logger.info(f"Inserted delivery into DB for order_id {data['order_id']}")
                                     conn.commit()
@@ -147,9 +148,16 @@ async def startup_event():
     logging.info("startup: starting background consumer")
     app.state.task = asyncio.create_task(consume_from_queue(app))
     
-    redis = aioredis.from_url(REDIS_URL, encoding="utf8", decode_responses=True)
+    redis = await aioredis.from_url(
+        REDIS_URL,
+        encoding="utf8",
+        decode_responses=True,
+        ssl=True,  # <--- required for rediss
+        socket_timeout=5,
+        socket_connect_timeout=5
+    )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-
+    
 @app.on_event("shutdown")
 async def shutdown_event():
     logging.info("shutdown: cancelling background task")
@@ -161,7 +169,8 @@ async def shutdown_event():
     
     for handler in logging.getLogger().handlers:
         if isinstance(handler, ServiceBusLogHandler):
-            await handler.close()
+            if asyncio.iscoroutinefunction(handler.close):
+                await handler.close()
 
 @app.get("/health")
 async def health_check():
