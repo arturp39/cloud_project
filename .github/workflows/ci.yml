@@ -35,8 +35,18 @@ jobs:
         run: echo "PYTHONPATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
 
       - name: Run tests
+        env:
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+          SERVICE_BUS: ${{ secrets.SERVICE_BUS }}
+          SERVICE_BUS_QUEUE_NAME: ${{ secrets.SERVICE_BUS_QUEUE_NAME }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
         run: pytest --disable-warnings
-
+        
       - name: Log in to Azure
         uses: azure/login@v1
         with:
