@@ -203,3 +203,7 @@ async def update_delivery_status(delivery_id: int, status: DeliveryStatus, db: S
     db.commit()
     db.refresh(delivery)
     return delivery
+
+@app.get("/azurehealth", include_in_schema=False)
+def azure_health():
+    return {"status": "ok"}
