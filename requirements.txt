@@ -1,8 +1,0 @@
-pytest
-pytest-asyncio
-httpx
-fastapi-cache2
-python-dotenv
-python-dotenv
-psycopg2-binary
-redis
